@@ -1,0 +1,87 @@
+<?php
+
+/**
+ * SQL date formats.
+ */
+const SCHEDULEFIELD_SQL_DATE_FORMAT = 'Y-m-d';
+const SCHEDULEFIELD_SQL_TIME_FORMAT = 'H:i:s';
+
+/**
+ * Drupal date format.
+ */
+const SCHEDULEFIELD_DATE_FORMAT = 'schedulefield_day';
+const SCHEDULEFIELD_TIME_FORMAT = 'schedulefield_time';
+
+require_once 'schedulefield.helper.inc';
+require_once 'schedulefield.crud.inc';
+require_once 'schedulefield.field.inc';
+
+/**
+ * Implements hook_theme().
+ */
+function schedulefield_theme() {
+  return array(
+    'schedulefield_formatter' => array(
+      'variables' => array('item' => array()),
+    ),
+  );
+}
+
+/**
+ * Implements hook_date_format_types().
+ */
+function schedulefield_date_format_types() {
+  return array(
+    SCHEDULEFIELD_DATE_FORMAT => t('Schedule field date'),
+    SCHEDULEFIELD_TIME_FORMAT => t('Schedule field time'),
+  );
+}
+
+/**
+ * Implements hook_date_formats().
+ */
+function schedulefield_date_formats() {
+  return array(
+    array(
+      'type' => SCHEDULEFIELD_DATE_FORMAT,
+      'format' => 'Y m d',
+      'locales' => array('en', 'en-us'),
+    ),
+    array(
+      'type' => SCHEDULEFIELD_DATE_FORMAT,
+      'format' => 'd m Y',
+      'locales' => array('fr'),
+    ),
+    array(
+      'type' => SCHEDULEFIELD_TIME_FORMAT,
+      'format' => 'h:i a',
+      'locales' => array('en', 'en-us'),
+    ),
+    array(
+      'type' => SCHEDULEFIELD_TIME_FORMAT,
+      'format' => 'H:i',
+      'locales' => array('fr'),
+    ),
+  );
+}
+
+/**
+ * Returns available periods in a day.
+ *
+ * @return
+ *   An array of available periods in a day keyed by period key and containing
+ *   period human name.
+ */
+function schedulefield_get_periods() {
+  $periods =& drupal_static(__FUNCTION__, array());
+  if (!$periods) {
+
+    $periods = array(
+      'morning' => t('Morning'),
+      'afternoon' => t('Afternoon'),
+    );
+    drupal_alter('schedule_field_periods', $periods);
+  }
+
+  return $periods;
+}

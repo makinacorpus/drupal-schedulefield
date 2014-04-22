@@ -1,0 +1,142 @@
+<?php
+
+/**
+ * @file
+ * Install and uninstall functions for the schedulefield module.
+ */
+
+/**
+ * Implements hook_schema().
+ */
+function schedulefield_schema() {
+  $schema = array();
+
+  $schema['schedulefield_period'] = array(
+    'description' => 'Store a scheduled period',
+    'fields' => array(
+      'pid' => array(
+        'description' => 'The primary identifier for a scheduled period.',
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'date_start' => array(
+        'description' => 'The date start of the period.',
+        'type' => 'text',
+        'mysql_type' => 'date',
+        'pgsql_type' => 'date',
+        'not null' => TRUE,
+      ),
+      'date_end' => array(
+        'description' => 'The date end of the period.',
+        'type' => 'text',
+        'mysql_type' => 'date',
+        'pgsql_type' => 'date',
+        'not null' => TRUE,
+      ),
+      'text_opening' => array(
+        'description' => 'Information about opening time.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'text_closing' => array(
+        'description' => 'Information about closing time.',
+        'type' => 'varchar',
+        'length' => 255,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+    ),
+    'primary key' => array('pid'),
+    'indexes' => array(
+      'date_between' => array('date_start', 'date_end'),
+      'date_end' => array('date_end'),
+    ),
+  );
+
+  $schema['schedulefield_day'] = array(
+    'description' => 'Store a schedule by day.',
+    'fields' => array(
+      'did' => array(
+        'description' => 'The primary identifier.',
+        'type' => 'serial',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+      'pid' => array(
+        'description' => 'The identifier of the scheduled period its belongs to.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'day_week' => array(
+        'description' => 'The day of the week number.',
+        'type' => 'int',
+        'size' => 'tiny',
+        'not null' => TRUE,
+        'default' => 0,
+      ),
+      'period' => array(
+        'description' => 'The period of the day. E.g : morning, afternoon.',
+        'type' => 'varchar',
+        'length' => 32,
+        'not null' => TRUE,
+        'default' => '',
+      ),
+      'time_start' => array(
+        'description' => 'The time start of the period in the day.',
+        'type' => 'text',
+        'mysql_type' => 'time',
+        'pgsql_type' => 'time',
+        'not null' => TRUE,
+      ),
+      'time_end' => array(
+        'description' => 'The time end of the period in the day.',
+        'type' => 'text',
+        'mysql_type' => 'time',
+        'pgsql_type' => 'time',
+        'not null' => TRUE,
+      ),
+    ),
+    'primary key' => array('did'),
+    'unique keys' => array(
+      'day_week_period' => array('day_week', 'period'),
+    ),
+    'indexes' => array(
+      'time_between' => array('time_start', 'time_end'),
+      'time_end' => array('time_end'),
+    ),
+    'foreign keys' => array(
+      'pid' => array(
+        'table' => 'schedulefield_period',
+        'columns' => array('pid' => 'pid'),
+      ),
+    ),
+  );
+
+  return $schema;
+}
+
+/**
+ * Implements hook_field_schema().
+ */
+function schedulefield_field_schema($field) {
+  return array(
+    'columns' => array(
+      'pid' => array(
+        'description' => 'The schedule period ID reference.',
+        'type' => 'int',
+        'not null' => TRUE,
+        'unsigned' => TRUE,
+      ),
+    ),
+    'foreign keys' => array(
+      'pid' => array(
+        'table' => 'schedulefield_period',
+        'columns' => array('pid' => 'pid'),
+      ),
+    ),
+  );
+}
