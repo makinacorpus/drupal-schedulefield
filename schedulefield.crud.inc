@@ -39,18 +39,23 @@ function schedulefield_schedule_load_multiple($pids, $reset = FALSE) {
       $query->condition('sp.pid', $pids);
     }
 
-    $query->join('schedulefield_day', 'sd', 'sp.pid = sd.pid');
+    $query->leftJoin('schedulefield_day', 'sd', 'sp.pid = sd.pid');
     $query->fields('sd', array('did', 'day_week', 'period', 'time_start', 'time_end'));
     $result = $query->execute()->fetchAll();
 
     foreach ($result as $data) {
+
       $cache[$data->pid]['date_start'] = $data->date_start;
       $cache[$data->pid]['date_end'] = $data->date_start;
       $cache[$data->pid]['text_opening'] = $data->text_opening;
       $cache[$data->pid]['text_closing'] = $data->text_closing;
-      $cache[$data->pid]['days'][$data->day_week][$data->period]['did'] = $data->did;
-      $cache[$data->pid]['days'][$data->day_week][$data->period]['time_start'] = $data->time_start;
-      $cache[$data->pid]['days'][$data->day_week][$data->period]['time_end'] = $data->time_end;
+
+      $cache[$data->pid]['days'] = array();
+      if (isset($data->did)) {
+        $cache[$data->pid]['days'][$data->day_week][$data->period]['did'] = $data->did;
+        $cache[$data->pid]['days'][$data->day_week][$data->period]['time_start'] = $data->time_start;
+        $cache[$data->pid]['days'][$data->day_week][$data->period]['time_end'] = $data->time_end;
+      }
     }
   }
 

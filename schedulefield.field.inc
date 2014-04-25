@@ -183,8 +183,10 @@ function schedulefield_field_widget_form(&$form, &$form_state, $field, $instance
       '#value' => $items[$delta]['pid'],
     );
     $schedule = schedulefield_schedule_load($items[$delta]['pid']);
-    schedulefield_convert_sql_to_php($schedule, $date_format, $time_format);
-    $items[$delta] += $schedule;
+    if ($schedule) {
+      schedulefield_convert_sql_to_php($schedule, $date_format, $time_format);
+      $items[$delta] += $schedule;
+    }
   }
 
   $element['date_start'] = array(
