@@ -102,7 +102,7 @@ function schedulefield_schema() {
     ),
     'primary key' => array('did'),
     'unique keys' => array(
-      'day_week_period' => array('day_week', 'period'),
+      'pid_day_week_period' => array('pid', 'day_week', 'period'),
     ),
     'indexes' => array(
       'time_between' => array('time_start', 'time_end'),
