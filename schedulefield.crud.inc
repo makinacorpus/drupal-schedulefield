@@ -186,7 +186,7 @@ function schedulefield_schedule_delete_multiple(array $pids) {
     try {
 
       db_delete('schedulefield_day')
-        >condition('pid', $pids)
+        ->condition('pid', $pids)
         ->execute();
       db_delete('schedulefield_period')
         ->condition('pid', $pids)
