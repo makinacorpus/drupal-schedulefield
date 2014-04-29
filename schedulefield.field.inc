@@ -505,13 +505,15 @@ function schedulefield_field_formatter_view($entity_type, $entity, $field, $inst
     schedulefield_convert_sql_to_php($item, $date_format, $time_format);
 
     // Re-order days.
-    ksort($items['days']);
-    if ($first_day > 0) {
-      foreach ($items['days'] as $day_week => $values) {
-        if ($day_week >= $first_day) {
-          break;
+    if (!empty($items['days'])) {
+      ksort($items['days']);
+      if ($first_day > 0) {
+        foreach ($items['days'] as $day_week => $values) {
+          if ($day_week >= $first_day) {
+            break;
+          }
+          $items['days'][$day_week] = $values;
         }
-        $items['days'][$day_week] = $values;
       }
     }
 
