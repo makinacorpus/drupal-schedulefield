@@ -59,7 +59,7 @@ function schedulefield_schedule_load_multiple($pids, $reset = FALSE) {
     }
   }
 
-  return $passed_pids ? array_intersect_key($cache, array_flip($passed_pids)) : $cache;
+  return $passed_pids === FALSE ? $cache : (is_array($passed_pids) ? array_intersect_key($cache, array_flip($passed_pids)) : array());
 }
 
 /**
