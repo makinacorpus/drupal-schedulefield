@@ -56,14 +56,20 @@ function schedulefield_field_presave($entity_type, $entity, $field, $instance, $
 
   foreach ($items as &$item) {
 
-    schedulefield_convert_php_to_sql($item, $date_format, $time_format);
-
     $pid = 0;
+    // Schedule update ?
     if (!empty($item['pid'])) {
-      schedulefield_schedule_update($item);
-      $pid = $item['pid'];
+      // Redondant check if submitted through a form but not if submitted
+      // programmatically. No required field means no update necessary.
+      if (!schedulefield_field_is_empty($item, $field)) {
+
+        schedulefield_convert_php_to_sql($item, $date_format, $time_format);
+        schedulefield_schedule_update($item);
+        $pid = $item['pid'];
+      }
     }
     else {
+      schedulefield_convert_php_to_sql($item, $date_format, $time_format);
       $pid = schedulefield_schedule_insert($item);
     }
 
