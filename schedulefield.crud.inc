@@ -45,12 +45,15 @@ function schedulefield_schedule_load_multiple($pids, $reset = FALSE) {
 
     foreach ($result as $data) {
 
-      $cache[$data->pid]['date_start'] = $data->date_start;
-      $cache[$data->pid]['date_end'] = $data->date_start;
-      $cache[$data->pid]['text_opening'] = $data->text_opening;
-      $cache[$data->pid]['text_closing'] = $data->text_closing;
+      if (!isset($cache[$data->pid])) {
+        $cache[$data->pid]['date_start'] = $data->date_start;
+        $cache[$data->pid]['date_end'] = $data->date_end;
+        $cache[$data->pid]['text_opening'] = $data->text_opening;
+        $cache[$data->pid]['text_closing'] = $data->text_closing;
+        $cache[$data->pid]['days'] = array();
+      }
 
-      $cache[$data->pid]['days'] = array();
+      // Have we days for this period?
       if (isset($data->did)) {
         $cache[$data->pid]['days'][$data->day_week][$data->period]['did'] = $data->did;
         $cache[$data->pid]['days'][$data->day_week][$data->period]['time_start'] = $data->time_start;
