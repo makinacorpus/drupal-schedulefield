@@ -25,25 +25,24 @@ function schedulefield_field_info() {
  * Implements hook_field_is_empty();
  */
 function schedulefield_field_is_empty($item, $field) {
-  $is_empty = FALSE;
 
-  if (empty($item['date_start']) || empty($item['date_end'])) {
-    $is_empty = TRUE;
+  // Have at least one date so not empty.
+  if (!empty($item['date_start']) || !empty($item['date_end'])) {
+    return FALSE;
   }
-  else {
-    foreach ($item['days'] as $day_week => $periods) {
-      foreach ($periods as $period => $times) {
-        if ((!empty($times['time_start']) && empty($times['time_end']))
-          || (empty($times['time_start']) && !empty($times['time_end']))) {
 
-          $is_empty = TRUE;
-          break;
-        }
+  // No dates but at least one time, not empty.
+  foreach ($item['days'] as $day_week => $periods) {
+    foreach ($periods as $period => $times) {
+
+      if (!empty($times['time_start']) || !empty($times['time_end'])) {
+        return FALSE;
       }
     }
   }
 
-  return $is_empty;
+  // Otherwise, field is empty.
+  return TRUE;
 }
 
 /**
@@ -57,20 +56,21 @@ function schedulefield_field_presave($entity_type, $entity, $field, $instance, $
   foreach ($items as &$item) {
 
     $pid = 0;
-    // Schedule update ?
-    if (!empty($item['pid'])) {
-      // Redondant check if submitted through a form but not if submitted
-      // programmatically. No required field means no update necessary.
-      if (!schedulefield_field_is_empty($item, $field)) {
 
+    // Redondant check if submitted through a form but not if submitted
+    // programmatically. No required field means no update necessary.
+    if (!schedulefield_field_is_empty($item, $field)) {
+
+      // Schedule update ?
+      if (!empty($item['pid'])) {
         schedulefield_convert_php_to_sql($item, $date_format, $time_format);
         schedulefield_schedule_update($item);
         $pid = $item['pid'];
       }
-    }
-    else {
-      schedulefield_convert_php_to_sql($item, $date_format, $time_format);
-      $pid = schedulefield_schedule_insert($item);
+      else {
+        schedulefield_convert_php_to_sql($item, $date_format, $time_format);
+        $pid = schedulefield_schedule_insert($item);
+      }
     }
 
     $item = array('pid' => $pid);
@@ -349,22 +349,16 @@ function schedulefield_validate_dates($element, &$form_state, $form) {
 
   // Check dates.
   if (!form_get_error($element['date_start']) && !form_get_error($element['date_end'])
-    && (!empty($element['date_start']['#value']) || !empty($element['date_end']['#value']))) {
+    && !empty($element['date_start']['#value']) && !empty($element['date_end']['#value'])) {
 
-    if (empty($element['date_start']['#value']) || empty($element['date_end']['#value'])) {
-      form_error($element, t('Both fields %start and %end are mutually required.', array('%start' => $element['date_start']['#title'], '%end' => $element['date_end']['#title'])));
-    }
-    else {
+    // Time generated would be the approximatively the same and start is deals
+    // first so it doesn't really matter.
+    $format = $form_state['schedulefield']['formats']['date'];
+    $date_start = DateTime::createFromFormat($format, $element['date_start']['#value'])->getTimestamp();
+    $date_end = DateTime::createFromFormat($format, $element['date_end']['#value'])->getTimestamp();
 
-      // Time generated would be the approximatively the same and start is deals
-      // first so it doesn't really matter.
-      $format = $form_state['schedulefield']['formats']['date'];
-      $date_start = DateTime::createFromFormat($format, $element['date_start']['#value'])->getTimestamp();
-      $date_end = DateTime::createFromFormat($format, $element['date_end']['#value'])->getTimestamp();
-
-      if ($date_start > $date_end) {
-        form_error($element, t('Field %start could not be greater than field %end.', array('%start' => $element['date_start']['#title'], '%end' => $element['date_end']['#title'])));
-      }
+    if ($date_start > $date_end) {
+      form_error($element, t('Field %start could not be greater than field %end.', array('%start' => $element['date_start']['#title'], '%end' => $element['date_end']['#title'])));
     }
   }
 }
@@ -389,22 +383,16 @@ function schedulefield_validate_time($element, &$form_state, $form) {
 function schedulefield_validate_times($element, &$form_state, $form) {
 
   if (!form_get_error($element['time_start']) && !form_get_error($element['time_end'])
-    && (!empty($element['time_start']['#value']) || !empty($element['time_end']['#value']))) {
+    && !empty($element['time_start']['#value']) && !empty($element['time_end']['#value'])) {
 
-    if (empty($element['time_start']['#value']) || empty($element['time_end']['#value'])) {
-      form_error($element, t('Both fields %start and %end are mutually required.', array('%start' => $element['time_start']['#title'], '%end' => $element['time_end']['#title'])));
-    }
-    else {
+    // Days generated would be the same and start is deals first so it doesn't
+    // really matter
+    $format = $form_state['schedulefield']['formats']['time'];
+    $time_start = DateTime::createFromFormat($format, $element['time_start']['#value'])->getTimestamp();
+    $time_end = DateTime::createFromFormat($format, $element['time_end']['#value'])->getTimestamp();
 
-      // Days generated would be the same and start is deals first so it doesn't
-      // really matter
-      $format = $form_state['schedulefield']['formats']['time'];
-      $time_start = DateTime::createFromFormat($format, $element['time_start']['#value'])->getTimestamp();
-      $time_end = DateTime::createFromFormat($format, $element['time_end']['#value'])->getTimestamp();
-
-      if ($time_start > $time_end) {
-        form_error($element, t('Field %start could not be greater than field %end.', array('%start' => $element['time_start']['#title'], '%end' => $element['time_end']['#title'])));
-      }
+    if ($time_start > $time_end) {
+      form_error($element, t('Field %start could not be greater than field %end.', array('%start' => $element['time_start']['#title'], '%end' => $element['time_end']['#title'])));
     }
   }
 }
@@ -542,7 +530,15 @@ function theme_schedulefield_formatter($variables) {
   $output = '';
 
   $output .= '<div class="schedulefield">';
-  $output .= '<p>' . t('From !start to !end', array('!start' => $item['date_start'], '!end' => $item['date_end']));
+  if (isset($item['date_start']) && isset($item['date_end'])) {
+    $output .= '<p>' . t('From !start to !end', array('!start' => $item['date_start'], '!end' => $item['date_end']));
+  }
+  elseif (isset($item['date_start'])) {
+    $output .= '<p>' . t('From !start', array('!start' => $item['date_start']));
+  }
+  elseif (isset($item['date_end'])) {
+    $output .= '<p>' . t('To !end', array('!end' => $item['date_end']));
+  }
 
   if (!empty($item['text_opening'])) {
     $output .= '<br />' . check_plain($item['text_opening']);
@@ -555,7 +551,16 @@ function theme_schedulefield_formatter($variables) {
     $output .= '<br /><br />' . schedulefield_get_dayname($day_week) . ' : ';
     $days = array();
     foreach ($periods as $period => $datetimes) {
-      $days[] = t('!period : From !time_start to !time_end', array('!period' => ucfirst($period), '!time_start' => $datetimes['time_start'], '!time_end' => $datetimes['time_end']));
+
+      if (isset($datetimes['time_start']) && isset($datetimes['time_end'])) {
+        $days[] = t('!period : From !time_start to !time_end', array('!period' => ucfirst($period), '!time_start' => $datetimes['time_start'], '!time_end' => $datetimes['time_end']));
+      }
+      elseif (isset($datetimes['time_start'])) {
+        $days[] = t('!period : From !time_start', array('!period' => ucfirst($period), '!time_start' => $datetimes['time_start']));
+      }
+      elseif (isset($datetimes['time_end'])) {
+        $days[] = t('!period : To !time_end', array('!period' => ucfirst($period), '!time_end' => $datetimes['time_end']));
+      }
     }
     $output .= implode(', ', $days);
   }

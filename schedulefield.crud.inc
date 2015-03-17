@@ -46,8 +46,8 @@ function schedulefield_schedule_load_multiple($pids, $reset = FALSE) {
     foreach ($result as $data) {
 
       if (!isset($cache[$data->pid])) {
-        $cache[$data->pid]['date_start'] = $data->date_start;
-        $cache[$data->pid]['date_end'] = $data->date_end;
+        $cache[$data->pid]['date_start'] = isset($data->date_start) ? $data->date_start : NULL;
+        $cache[$data->pid]['date_end'] = isset($data->date_end) ? $data->date_end : NULL;
         $cache[$data->pid]['text_opening'] = $data->text_opening;
         $cache[$data->pid]['text_closing'] = $data->text_closing;
         $cache[$data->pid]['days'] = array();
@@ -56,8 +56,8 @@ function schedulefield_schedule_load_multiple($pids, $reset = FALSE) {
       // Have we days for this period?
       if (isset($data->did)) {
         $cache[$data->pid]['days'][$data->day_week][$data->period]['did'] = $data->did;
-        $cache[$data->pid]['days'][$data->day_week][$data->period]['time_start'] = $data->time_start;
-        $cache[$data->pid]['days'][$data->day_week][$data->period]['time_end'] = $data->time_end;
+        $cache[$data->pid]['days'][$data->day_week][$data->period]['time_start'] = isset($data->time_start) ? $data->time_start : NULL;
+        $cache[$data->pid]['days'][$data->day_week][$data->period]['time_end'] = isset($data->time_end) ? $data->time_end : NULL;
       }
     }
   }
@@ -95,8 +95,8 @@ function schedulefield_schedule_insert(array $data) {
 
     $pid = db_insert('schedulefield_period')
       ->fields(array(
-        'date_start' => $data['date_start'],
-        'date_end' => $data['date_end'],
+        'date_start' => !empty($data['date_start']) ? $data['date_start'] : NULL,
+        'date_end' => !empty($data['date_end']) ? $data['date_end'] : NULL,
         'text_opening' => $data['text_opening'],
         'text_closing' => $data['text_closing'],
       ))
@@ -106,15 +106,15 @@ function schedulefield_schedule_insert(array $data) {
 
       foreach ($data['days'] as $day_week => $periods) {
         foreach ($periods as $period => $times) {
-          if (!empty($times['time_start']) && !empty($times['time_end'])) {
+          if (!empty($times['time_start']) || !empty($times['time_end'])) {
 
             db_insert('schedulefield_day')
               ->fields(array(
                 'pid' => $pid,
                 'day_week' => $day_week,
                 'period' => $period,
-                'time_start' => $times['time_start'],
-                'time_end' => $times['time_end'],
+                'time_start' => !empty($times['time_start']) ? $times['time_start'] : NULL,
+                'time_end' => !empty($times['time_end']) ? $times['time_end'] : NULL,
               ))
               ->execute();
           }
@@ -144,8 +144,8 @@ function schedulefield_schedule_update(array $data) {
 
     db_update('schedulefield_period')
       ->fields(array(
-        'date_start' => $data['date_start'],
-        'date_end' => $data['date_end'],
+        'date_start' => !empty($data['date_start']) ? $data['date_start'] : NULL,
+        'date_end' => !empty($data['date_end']) ? $data['date_end'] : NULL,
         'text_opening' => $data['text_opening'],
         'text_closing' => $data['text_closing'],
       ))
@@ -168,8 +168,8 @@ function schedulefield_schedule_update(array $data) {
               'pid' => $data['pid'],
               'day_week' => $day_week,
               'period' => $period,
-              'time_start' => $times['time_start'],
-              'time_end' => $times['time_end'],
+              'time_start' => !empty($times['time_start']) ? $times['time_start'] : NULL,
+              'time_end' => !empty($times['time_end']) ? $times['time_end'] : NULL,
             ))
             ->execute();
         }
