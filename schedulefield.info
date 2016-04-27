@@ -1,3 +1,4 @@
 name = Schedule field
 description = "Schedule field by period, week and days."
 core = 7.x
+dependencies[] = udate
