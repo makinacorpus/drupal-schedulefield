@@ -47,8 +47,8 @@ function schedulefield_schedule_load_multiple($pids, $reset = false) {
       if (!isset($cache[$data->pid])) {
         $cache[$data->pid]['date_start'] = isset($data->date_start) ? \DateTime::createFromFormat(UDATE_PHP_DATE, $data->date_start) : null;
         $cache[$data->pid]['date_end'] = isset($data->date_end) ? \DateTime::createFromFormat(UDATE_PHP_DATE, $data->date_end) : null;
-        $cache[$data->pid]['text_opening'] = $data->text_opening ?: '';
-        $cache[$data->pid]['text_closing'] = $data->text_closing ?: '';
+        $cache[$data->pid]['text_opening'] = !empty($data->text_opening) ? $data->text_opening : '';
+        $cache[$data->pid]['text_closing'] = !empty($data->text_closing) ? $data->text_closing : '';
         $cache[$data->pid]['days'] = [];
       }
 
@@ -112,8 +112,8 @@ function schedulefield_schedule_insert(array $data) {
       ->fields([
         'date_start'    => !empty($data['date_start']) ? $data['date_start']->format(UDATE_PHP_DATE) : null,
         'date_end'      => !empty($data['date_end']) ? $data['date_end']->format(UDATE_PHP_DATE) : null,
-        'text_opening'  => $data['text_opening'] ?: '',
-        'text_closing'  => $data['text_closing'] ?: '',
+        'text_opening'  => !empty($data['text_opening']) ? $data['text_opening'] : '',
+        'text_closing'  => !empty($data['text_closing']) ? $data['text_closing'] : '',
       ])
       ->execute()
     ;
@@ -170,8 +170,8 @@ function schedulefield_schedule_update(array $data) {
       ->fields([
         'date_start'    => !empty($data['date_start']) ? $data['date_start']->format(UDATE_PHP_DATE) : null,
         'date_end'      => !empty($data['date_end']) ? $data['date_end']->format(UDATE_PHP_DATE) : null,
-        'text_opening'  => $data['text_opening'] ?: '',
-        'text_closing'  => $data['text_closing'] ?: '',
+        'text_opening'  => !empty($data['text_opening']) ? $data['text_opening'] : '',
+        'text_closing'  => !empty($data['text_closing']) ? $data['text_closing'] : '',
       ])
       ->condition('pid', $data['pid'])
       ->execute()
