@@ -16,7 +16,7 @@
     ],
     "autoload" : {
         "psr-4" : {
-            "MakinaCorpus\Schedule\\" : "src",
+            "MakinaCorpus\\Schedule\\" : "src",
         }
     },
     "minimum-stability" : "dev",
