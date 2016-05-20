@@ -14,6 +14,11 @@
             "homepage" : "http://makina-corpus.com"
         }
     ],
+    "autoload" : {
+        "psr-4" : {
+            "MakinaCorpus\Schedule\\" : "src",
+        }
+    },
     "minimum-stability" : "dev",
     "prefer-stable" : true
 }

@@ -119,11 +119,9 @@ function schedulefield_schedule_insert(array $data) {
     ;
 
     if ($pid) {
-
       foreach ($data['days'] as $day_week => $periods) {
         foreach ($periods as $period => $times) {
           if (!empty($times['time_start']) || !empty($times['time_end'])) {
-
             db_insert('schedulefield_day')
               ->fields([
                 'pid'         => $pid,
