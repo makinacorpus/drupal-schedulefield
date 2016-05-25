@@ -33,9 +33,8 @@ function schedulefield_field_is_empty($item, $field) {
 
   // No dates but at least one time, not empty.
   if (!empty($item['days'])) {
-    foreach ($item['days'] as $day_week => $periods) {
-      foreach ($periods as $period => $times) {
-
+    foreach ($item['days'] as $day => $slots) {
+      foreach ($slots as $slot => $times) {
         if (!empty($times['time_start']) || !empty($times['time_end'])) {
           return FALSE;
         }

@@ -90,7 +90,7 @@ function schedulefield_field_widget_form(&$form, &$form_state, $field, $instance
     ];
   }
 
-  $periods = schedulefield_get_periods();
+  $slots = schedulefield_get_slots();
   $first_day = variable_get('date_first_day', 0);
   $days_week = range(0, 6);
   if ($first_day !== 0) {
@@ -102,38 +102,38 @@ function schedulefield_field_widget_form(&$form, &$form_state, $field, $instance
 
     $element['days'][$day_week] = [
       '#type'  => 'item',
-      '#title' => schedulefield_get_dayname($day_week),
+      '#title' => schedulefield_get_day_name($day_week),
     ];
 
-    foreach ($periods as $period => $period_name) {
+    foreach ($slots as $slot => $slot_name) {
 
-      if (!empty($items[$delta]['days'][$day_week][$period]['did'])) {
-        $element['days'][$day_week][$period]['did'] = [
+      if (!empty($items[$delta]['days'][$day_week][$slot]['did'])) {
+        $element['days'][$day_week][$slot]['did'] = [
           '#type'   => 'value',
-          '#value'  => $items[$delta]['days'][$day_week][$period]['did'],
+          '#value'  => $items[$delta]['days'][$day_week][$slot]['did'],
         ];
       }
 
-      $element['days'][$day_week][$period] = [
+      $element['days'][$day_week][$slot] = [
         '#prefix' => '<div class="form-inline">',
         '#suffix' => '</div>',
       ];
-      $element['days'][$day_week][$period]['time_start'] = [
+      $element['days'][$day_week][$slot]['time_start'] = [
         '#type'             => 'utime',
         '#attributes'       => ['title' => t('Time start')],
         '#field_prefix'     => t('From'),
         '#granularity'      => UDATE_GRANULARITY_MINUTE,
-        '#default_value'    => !empty($items[$delta]['days'][$day_week][$period]['time_start']) ? $items[$delta]['days'][$day_week][$period]['time_start'] : '',
+        '#default_value'    => !empty($items[$delta]['days'][$day_week][$slot]['time_start']) ? $items[$delta]['days'][$day_week][$slot]['time_start'] : '',
       ];
-      $element['days'][$day_week][$period]['time_end'] = [
+      $element['days'][$day_week][$slot]['time_end'] = [
         '#type'             => 'utime',
         '#attributes'       => ['title' => t('Time end')],
         '#field_prefix'     => t('To'),
         '#granularity'      => UDATE_GRANULARITY_MINUTE,
-        '#default_value'    => !empty($items[$delta]['days'][$day_week][$period]['time_end']) ? $items[$delta]['days'][$day_week][$period]['time_end'] : '',
+        '#default_value'    => !empty($items[$delta]['days'][$day_week][$slot]['time_end']) ? $items[$delta]['days'][$day_week][$slot]['time_end'] : '',
       ];
 
-      $element['days'][$day_week][$period]['#element_validate'][] = 'schedulefield_validate_times';
+      $element['days'][$day_week][$slot]['#element_validate'][] = 'schedulefield_validate_times';
     }
   }
 

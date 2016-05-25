@@ -43,8 +43,8 @@ class ScheduleFieldHandler extends \MigrateFieldHandler
             }
 
             // We need to convert strings to \DateTime objects
-            foreach ($value['days'] as $day => $periods) {
-                foreach ($periods as $name => $data) {
+            foreach ($value['days'] as $day => $slots) {
+                foreach ($slots as $name => $data) {
                     $done = false;
                     foreach (['time_start', 'time_end'] as $foo) {
                         if (isset($data[$foo])) {

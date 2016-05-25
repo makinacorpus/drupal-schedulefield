@@ -17,36 +17,36 @@ function schedulefield_theme() {
 }
 
 /**
- * Returns available periods in a day.
+ * Returns available slots in a day.
  *
  * @return
- *   An array of available periods in a day keyed by period key and containing
- *   period human name.
+ *   An array of available slots in a day keyed by slot key and containing
+ *   the slot readable name.
  */
-function schedulefield_get_periods() {
-  $periods =& drupal_static(__FUNCTION__, []);
-  if (!$periods) {
-    $periods = [
+function schedulefield_get_slots() {
+  $slots =& drupal_static(__FUNCTION__, []);
+  if (!$slots) {
+    $slots = [
       'morning'   => t('Morning'),
       'afternoon' => t('Afternoon'),
     ];
-    drupal_alter('schedule_field_periods', $periods);
+    drupal_alter('schedule_field_slots', $slots);
   }
-  return $periods;
+  return $slots;
 }
 
 /**
- * Function helper to get dayname from a given day week number.
+ * Function helper to get day name from a given week day number.
  */
-function schedulefield_get_dayname($day_week) {
-  $day_weeks = [
-      0 => t('Sunday'),
-      1 => t('Monday'),
-      2 => t('Tuesday'),
-      3 => t('Wednesday'),
-      4 => t('Thursday'),
-      5 => t('Friday'),
-      6 => t('Saturday'),
+function schedulefield_get_day_name($day) {
+  $week = [
+    0 => t('Sunday'),
+    1 => t('Monday'),
+    2 => t('Tuesday'),
+    3 => t('Wednesday'),
+    4 => t('Thursday'),
+    5 => t('Friday'),
+    6 => t('Saturday'),
   ];
-  return isset($day_weeks[$day_week]) ? $day_weeks[$day_week] : '';
+  return isset($week[$day]) ? $week[$day] : '';
 }
