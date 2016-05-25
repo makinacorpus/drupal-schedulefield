@@ -25,7 +25,6 @@ function schedulefield_field_info() {
  * Implements hook_field_is_empty();
  */
 function schedulefield_field_is_empty($item, $field) {
-
   // Have at least one date so not empty.
   if (!empty($item['date_start']) || !empty($item['date_end'])) {
     return FALSE;

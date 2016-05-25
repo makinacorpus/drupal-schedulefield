@@ -10,10 +10,25 @@ require_once __DIR__ . '/schedulefield.field_widget.inc';
  */
 function schedulefield_theme() {
   return [
-    'schedulefield_formatter' => [
-      'variables' => ['item' => []],
+    'schedulefield_item' => [
+      'variables' => [
+        'item' => [],
+        'md_enabled' => false,  // Enable microdata
+        'md_property' => '',    // Microdata property for the field items
+      ],
+      'template' => 'schedulefield-item',
     ],
   ];
+}
+
+/**
+ * Implements template_preprocess_HOOK().
+ */
+function template_preprocess_schedulefield_item(&$variables) {
+  if ($variables['md_enabled']) {
+    $variables['itemscope'] = ' itemscope itemtype="http://schema.org/OpeningHoursSpecification"';
+    $variables['itemprop'] = !empty($variables['md_property']) ? ' itemprop="' . $variables['md_property'] . '"' : '';
+  }
 }
 
 /**
@@ -49,4 +64,22 @@ function schedulefield_get_day_name($day) {
     6 => t('Saturday'),
   ];
   return isset($week[$day]) ? $week[$day] : '';
+}
+
+/**
+ * Function helper to get the matching microdata URL from a given week day number.
+ */
+function schedulefield_get_day_microdata_url($day) {
+  $url = 'http://schema.org/';
+
+  switch ($day) {
+    case 0: return $url . 'Sunday';
+    case 1: return $url . 'Monday';
+    case 2: return $url . 'Tuesday';
+    case 3: return $url . 'Wednesday';
+    case 4: return $url . 'Thursday';
+    case 5: return $url . 'Friday';
+    case 6: return $url . 'Saturday';
+    default: return '';
+  }
 }

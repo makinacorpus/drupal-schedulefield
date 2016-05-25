@@ -19,7 +19,7 @@ function schedulefield_field_formatter_settings_form($field, $instance, $view_mo
   $element = [];
 
   $display = $instance['display'][$view_mode];
-  $settings = $display['settings'];
+  $settings = $display['settings'] + schedulefield_field_formatter_settings_default();
 
   $formats = system_get_date_types();
   $options = array();
@@ -28,17 +28,30 @@ function schedulefield_field_formatter_settings_form($field, $instance, $view_mo
   }
 
   $element['date_format'] = array(
-    '#type' => 'select',
-    '#title' => t('Date format'),
-    '#options' => $options,
-    '#default_value' => $settings['date_format'],
+    '#type'           => 'select',
+    '#title'          => t('Date format'),
+    '#options'        => $options,
+    '#default_value'  => $settings['date_format'],
   );
 
   $element['time_format'] = array(
-    '#type' => 'select',
-    '#title' => t('Time format'),
-    '#options' => $options,
-    '#default_value' => $settings['time_format'],
+    '#type'           => 'select',
+    '#title'          => t('Time format'),
+    '#options'        => $options,
+    '#default_value'  => $settings['time_format'],
+  );
+
+  $element['md_enabled'] = array(
+    '#title'          => t('Automatically add microdata'),
+    '#type'           => 'checkbox',
+    '#default_value'  => $settings['md_enabled'],
+  );
+
+  $element['md_property'] = array(
+    '#title'          => t('Microdata property name'),
+    '#type'           => 'textfield',
+    '#description'    => t('Fill in this field if you want to define the hours as a property of another microdata type. Microdata must be enabled.'),
+    '#default_value'  => $settings['md_property'],
   );
 
   return $element;
@@ -49,34 +62,63 @@ function schedulefield_field_formatter_settings_form($field, $instance, $view_mo
  */
 function schedulefield_field_formatter_settings_summary($field, $instance, $view_mode) {
   $display = $instance['display'][$view_mode];
-  $settings = $display['settings'];
+  $settings = $display['settings'] + schedulefield_field_formatter_settings_default();
 
-  $summary = array();
-
+  $summary = [];
   $types = system_get_date_types();
-  $summary[] = t('Date format : %format', array('%format' => $types[$settings['date_format']]['title']));
-  $summary[] = t('Time format : %format', array('%format' => $types[$settings['time_format']]['title']));
 
-  return implode('<br />', $summary);
+  if ($settings['date_format'] == 'custom') {
+    $summary[] = t('Date format: %format', ['%format' => t('by default (dd/mm/yyyy)')]);
+  } else {
+    $summary[] = t('Date format: %format', ['%format' => $types[$settings['date_format']]['title']]);
+  }
+
+  if ($settings['time_format'] == 'custom') {
+    $summary[] = t('Time format: %format', ['%format' => t('by default (hh:mm)')]);
+  } else {
+    $summary[] = t('Time format: %format', array('%format' => $types[$settings['time_format']]['title']));
+  }
+
+  if (isset($settings['md_enabled']) && $settings['md_enabled']) {
+    $summary[] = t('Microdata enabled');
+    if (!empty($settings['md_property'])) {
+      $summary[] = t('Microdata property name: @name', ['@name' => $settings['md_property']]);
+    }
+  } else {
+    $summary[] = t('Microdata disabled');
+  }
+
+  return implode('<br/>', $summary);
 }
 
 /**
  * Implements hook_field_prepare_view().
  */
 function schedulefield_field_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items) {
-
-  // Preload all schedules.
+  // Preload all periods.
   $pids = array();
-  foreach ($items as $entity_id => $item) {
-    foreach ($item as $delta => $values) {
-      $pids[$values['pid']] = $values['pid'];
+
+  foreach ($items as $item) {
+    foreach ($item as $delta => $value) {
+      $pids[$value['pid']] = $value['pid'];
     }
   }
-  $schedules = schedulefield_schedule_load_multiple($pids);
+
+  $periods = schedulefield_schedule_load_multiple($pids);
 
   foreach ($items as &$item) {
-    foreach ($item as $delta => &$values) {
-      $values += $schedules[$values['pid']];
+    foreach ($item as $delta => &$value) {
+      $value += $periods[$value['pid']];
+      // Ensures slots are well ordered
+      foreach ($value['days'] as $day => &$slots) {
+        $ordered_slots = [];
+        foreach (schedulefield_get_slots() as $key => $label) {
+          if (isset($slots[$key])) {
+            $ordered_slots[$key] = $slots[$key];
+          }
+        }
+        $slots = $ordered_slots;
+      }
     }
   }
 }
@@ -85,84 +127,86 @@ function schedulefield_field_prepare_view($entity_type, $entities, $field, $inst
  * Implements hook_field_formatter_view().
  */
 function schedulefield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
-  return [];
-  // FIXME
-  /*
-  global $language;
   $element = array();
+  $settings = $display['settings'] + schedulefield_field_formatter_settings_default();
 
   foreach ($items as $delta => $item) {
+    $fdow = variable_get('date_first_day', 1);
 
-    // Convert SQL format to drupal formats.
-
-    // Re-order days.
-    if (!empty($items['days'])) {
-      ksort($items['days']);
-      if ($first_day > 0) {
-        foreach ($items['days'] as $day_week => $values) {
-          if ($day_week >= $first_day) {
+    // Reorders days
+    if (!empty($item['days'])) {
+      // Ensures days are correctly ordered by ascending day number
+      ksort($item['days']);
+      // Makes the first day of the week the first of the array
+      if ($fdow > 0) {
+        foreach ($item['days'] as $day => $hours) {
+          if ($day >= $fdow) {
             break;
           }
-          $items['days'][$day_week] = $values;
+          unset($item['days'][$day]);
+          $item['days'][$day] = $hours;
+        }
+      }
+    }
+
+    // Converts dates and times from DateTime/DateInterval to formatted string
+    if (isset($item['date_start'])) {
+      if ($settings['md_enabled']) {
+        $item['date_start_iso'] = $item['date_start']->format('Y-m-d');
+      }
+      $item['date_start'] = format_date($item['date_start']->getTimestamp(), $settings['date_format'], $settings['date_format_custom']);
+    }
+
+    if (isset($item['date_end'])) {
+      if ($settings['md_enabled']) {
+        $item['date_end_iso'] = $item['date_end']->format('Y-m-d');
+      }
+      $item['date_end'] = format_date($item['date_end']->getTimestamp(), $settings['date_format'], $settings['date_format_custom']);
+    }
+
+    foreach ($item['days'] as $day => &$hours) {
+      foreach ($hours as $slot => &$times) {
+        if (isset($times['time_start'])) {
+          if ($settings['md_enabled']) {
+            $times['time_start_iso'] = $times['time_start']->format('%H:%I');
+          }
+
+          $date = (new \DateTime('today'))->add($times['time_start']);
+          $times['time_start'] = format_date($date->getTimestamp(), $settings['time_format'], $settings['time_format_custom']);
+        }
+
+        if (isset($times['time_end'])) {
+          if ($settings['md_enabled']) {
+            $times['time_end_iso'] = $times['time_end']->format('%H:%I');
+          }
+
+          $date = (new \DateTime('today'))->add($times['time_end']);
+          $times['time_end'] = format_date($date->getTimestamp(), $settings['time_format'], $settings['time_format_custom']);
         }
       }
     }
 
     $element[$delta] = array(
-      '#theme' => 'schedulefield_formatter',
+      '#theme' => 'schedulefield_item',
       '#item' => $item,
+      '#md_enabled' => $settings['md_enabled'],
+      '#md_property' => $settings['md_property'],
     );
   }
 
   return $element;
-   */
 }
 
 /**
- * Returns HTML for a default schedule field.
- *
- * @ingroup themeable
+ * Provides the formatter's default settings
  */
-function theme_schedulefield_formatter($variables) {
-  $item = $variables['item'];
-  $output = '';
-
-  $output .= '<div class="schedulefield">';
-  if (isset($item['date_start']) && isset($item['date_end'])) {
-    $output .= '<p>' . t('From !start to !end', array('!start' => $item['date_start'], '!end' => $item['date_end']));
-  }
-  elseif (isset($item['date_start'])) {
-    $output .= '<p>' . t('From !start', array('!start' => $item['date_start']));
-  }
-  elseif (isset($item['date_end'])) {
-    $output .= '<p>' . t('To !end', array('!end' => $item['date_end']));
-  }
-
-  if (!empty($item['text_opening'])) {
-    $output .= '<br />' . check_plain($item['text_opening']);
-  }
-  if (!empty($item['text_closing'])) {
-    $output .= '<br />' . check_plain($item['text_closing']);
-  }
-
-  foreach ($item['days'] as $day_week => $periods) {
-    $output .= '<br /><br />' . schedulefield_get_dayname($day_week) . ' : ';
-    $days = array();
-    foreach ($periods as $period => $datetimes) {
-
-      if (isset($datetimes['time_start']) && isset($datetimes['time_end'])) {
-        $days[] = t('!period : From !time_start to !time_end', array('!period' => ucfirst($period), '!time_start' => $datetimes['time_start'], '!time_end' => $datetimes['time_end']));
-      }
-      elseif (isset($datetimes['time_start'])) {
-        $days[] = t('!period : From !time_start', array('!period' => ucfirst($period), '!time_start' => $datetimes['time_start']));
-      }
-      elseif (isset($datetimes['time_end'])) {
-        $days[] = t('!period : To !time_end', array('!period' => ucfirst($period), '!time_end' => $datetimes['time_end']));
-      }
-    }
-    $output .= implode(', ', $days);
-  }
-
-  $output .= '</p></div>';
-  return $output;
+function schedulefield_field_formatter_settings_default() {
+  return array(
+    'date_format' => 'custom',
+    'date_format_custom' => 'd/m/Y',
+    'time_format' => 'custom',
+    'time_format_custom' => 'H:i',
+    'md_enabled' => false,
+    'md_property' => '',
+  );
 }
