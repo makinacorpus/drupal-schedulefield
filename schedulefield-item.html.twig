@@ -1,0 +1,68 @@
+{% if item.date_start or item.date_end %}
+  <div class="schedulefield-period">
+    {% if item.date_start and item.date_end %}
+      {% trans with {'%date_start%':item.date_start, '%date_end%':item.date_end} %}
+      From %date_start% to %date_end%
+      {% endtrans %}
+    {% elseif item.date_start %}
+      {% trans with {'%date_start%':item.date_start} %}
+      From %date_start%
+      {% endtrans %}
+    {% elseif item.date_end %}
+      {% trans with { '%date_end%':item.date_end} %}
+      To %date_end%
+      {% endtrans %}
+    {% endif %}
+  </div>
+{% endif %}
+
+{% if item.text_opening %}
+  <p class="schedulefield-text-opening">
+    {{ item.text_opening|check_plain }}
+  </p>
+{% endif %}
+
+  {% if item.text_closing %}
+    <p class="schedulefield-text-closing">
+      {{ item.text_closing|check_plain }}
+    </p>
+  {% endif %}
+
+{% for day, slots in item.days %}
+  <div class="schedulefield-day">
+  <span class="schedulefield-day-name">
+    {{ schedulefield_get_day_name(day) }}&nbsp;:
+  </span>
+    {% for hours in slots %}
+      <span class="schedulefield-slot"{% if md_enabled %}{{ itemprop ~ itemscope }}{% endif %}>
+      {% if md_enabled %}
+        {% if item.date_start_iso %}
+          <meta itemprop="validFrom" content="{{ item.date_start_iso }}"/>
+        {% endif %}
+
+        {% if item.date_end_iso %}
+          <meta itemprop="validThrough" content="{{ item.date_end_iso }}"/>
+        {% endif %}
+
+        <link itemprop="dayOfWeek" href="{{ schedulefield_get_day_microdata_url(day) }}"/>
+        {% if hours.time_start_iso %}
+          <meta itemprop="opens" content="{{ hours.time_start_iso }}"/>
+        {% endif %}
+
+        {% if hours.time_end_iso %}
+          <meta itemprop="closes" content="{{ hours.time_end_iso }}"/>
+        {% endif %}
+      {% endif %}
+
+      {% if not loop.first %},&nbsp;{% endif %}
+      {% if hours.time_start and hours.time_end %}
+        {{ hours.time_start }} - {{ hours.time_end }}
+      {% elseif hours.time_start %}
+        {% trans with {'%time_start%':hours.time_start} %}From %time_start%{% endtrans %}
+      {% elseif datetimes.time_end %}
+        {% trans with {'%time_end%':datetimes.time_end} %}To %time_end%{% endtrans %}
+      {% endif %}
+    </span>
+    {% endfor %}
+  </div>
+{% endfor %}

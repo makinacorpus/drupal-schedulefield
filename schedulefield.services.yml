@@ -1,0 +1,6 @@
+services:
+
+  twig.extension.drupal_schedulefield:
+    public: false
+    class: MakinaCorpus\Schedule\Twig\Extension\ScheduleExtension
+    tags: [{name: twig.extension}]
