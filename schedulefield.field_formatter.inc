@@ -111,7 +111,12 @@ function schedulefield_field_prepare_view($entity_type, $entities, $field, $inst
   if (!empty($periods)) {
     foreach ($items as &$item) {
       foreach ($item as $delta => &$value) {
+        if (!isset($periods[$value['pid']])) {
+          continue;
+        }
+
         $value += $periods[$value['pid']];
+
         // Ensures slots are well ordered
         foreach ($value['days'] as $day => &$slots) {
           $ordered_slots = [];
