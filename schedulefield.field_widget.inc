@@ -57,10 +57,6 @@ function schedulefield_field_widget_form(&$form, &$form_state, $field, $instance
       '#type'   => 'value',
       '#value'  => $items[$delta]['pid'],
     ];
-    $schedule = schedulefield_schedule_load($items[$delta]['pid']);
-    if ($schedule) {
-      $items[$delta] += $schedule;
-    }
   }
 
   // Period start and stop dates.

@@ -22,6 +22,48 @@ function schedulefield_field_info() {
 }
 
 /**
+ * Implements hook_field_load().
+ */
+function schedulefield_field_load($entity_type, $entities, $field, $instances, $langcode, &$items, $age) {
+
+  $pids = [];
+
+  foreach ($items as $item) {
+    foreach ($item as $value) {
+      if (!empty($value['pid'])) {
+        $pids[$value['pid']] = $value['pid'];
+      }
+    }
+  }
+
+  $periods = schedulefield_schedule_load_multiple($pids);
+
+  if (!empty($periods)) {
+    foreach ($items as &$item) {
+      foreach ($item as &$value) {
+
+        if (!isset($periods[$value['pid']])) {
+          continue;
+        }
+
+        $value += $periods[$value['pid']];
+
+        // Ensures slots are well ordered
+        foreach ($value['days'] as &$slots) {
+          $ordered_slots = [];
+          foreach (array_keys(schedulefield_get_slots()) as $key) {
+            if (isset($slots[$key])) {
+              $ordered_slots[$key] = $slots[$key];
+            }
+          }
+          $slots = $ordered_slots;
+        }
+      }
+    }
+  }
+}
+
+/**
  * Implements hook_field_is_empty();
  */
 function schedulefield_field_is_empty($item, $field) {

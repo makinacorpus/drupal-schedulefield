@@ -92,47 +92,6 @@ function schedulefield_field_formatter_settings_summary($field, $instance, $view
 }
 
 /**
- * Implements hook_field_prepare_view().
- */
-function schedulefield_field_prepare_view($entity_type, $entities, $field, $instances, $langcode, &$items) {
-  // Preload all periods.
-  $pids = array();
-
-  foreach ($items as $item) {
-    foreach ($item as $delta => $value) {
-      if (!empty($value['pid'])) {
-        $pids[$value['pid']] = $value['pid'];
-      }
-    }
-  }
-
-  $periods = schedulefield_schedule_load_multiple($pids);
-
-  if (!empty($periods)) {
-    foreach ($items as &$item) {
-      foreach ($item as $delta => &$value) {
-        if (!isset($periods[$value['pid']])) {
-          continue;
-        }
-
-        $value += $periods[$value['pid']];
-
-        // Ensures slots are well ordered
-        foreach ($value['days'] as $day => &$slots) {
-          $ordered_slots = [];
-          foreach (schedulefield_get_slots() as $key => $label) {
-            if (isset($slots[$key])) {
-              $ordered_slots[$key] = $slots[$key];
-            }
-          }
-          $slots = $ordered_slots;
-        }
-      }
-    }
-  }
-}
-
-/**
  * Implements hook_field_formatter_view().
  */
 function schedulefield_field_formatter_view($entity_type, $entity, $field, $instance, $langcode, $items, $display) {
