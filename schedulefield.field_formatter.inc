@@ -132,24 +132,26 @@ function schedulefield_field_formatter_view($entity_type, $entity, $field, $inst
       $item['date_end'] = format_date($item['date_end']->getTimestamp(), $settings['date_format'], $settings['date_format_custom']);
     }
 
-    foreach ($item['days'] as $day => &$hours) {
-      foreach ($hours as $slot => &$times) {
-        if (isset($times['time_start'])) {
-          if ($settings['md_enabled']) {
-            $times['time_start_iso'] = $times['time_start']->format('%H:%I');
+    if (!empty($item['days'])) {
+      foreach ($item['days'] as $day => &$hours) {
+        foreach ($hours as $slot => &$times) {
+          if (isset($times['time_start'])) {
+            if ($settings['md_enabled']) {
+              $times['time_start_iso'] = $times['time_start']->format('%H:%I');
+            }
+
+            $date = (new \DateTime('today'))->add($times['time_start']);
+            $times['time_start'] = format_date($date->getTimestamp(), $settings['time_format'], $settings['time_format_custom']);
           }
 
-          $date = (new \DateTime('today'))->add($times['time_start']);
-          $times['time_start'] = format_date($date->getTimestamp(), $settings['time_format'], $settings['time_format_custom']);
-        }
+          if (isset($times['time_end'])) {
+            if ($settings['md_enabled']) {
+              $times['time_end_iso'] = $times['time_end']->format('%H:%I');
+            }
 
-        if (isset($times['time_end'])) {
-          if ($settings['md_enabled']) {
-            $times['time_end_iso'] = $times['time_end']->format('%H:%I');
+            $date = (new \DateTime('today'))->add($times['time_end']);
+            $times['time_end'] = format_date($date->getTimestamp(), $settings['time_format'], $settings['time_format_custom']);
           }
-
-          $date = (new \DateTime('today'))->add($times['time_end']);
-          $times['time_end'] = format_date($date->getTimestamp(), $settings['time_format'], $settings['time_format_custom']);
         }
       }
     }
